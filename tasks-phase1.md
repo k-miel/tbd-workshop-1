@@ -96,7 +96,15 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
     ![YARN UI Screenshot](doc/figures/6-yarn-ui.png)
 
-   ***place the command you used for setting up the tunnel, the port and the screenshot of YARN UI here***
+   Komenda użyta do ustawienia tunelu IAP:
+   ```bash
+   gcloud compute ssh tbd-cluster-m \
+     --project=$(gcloud config get-value project) \
+     --zone=europe-west1-b \
+     --tunnel-through-iap \
+     -- -L 8088:localhost:8088
+   ```
+   Po nawiązaniu połączenia YARN UI było dostępne pod adresem: http://localhost:8088
 
    Hint: the Dataproc cluster has `internal_ip_only = true`, so you need to use an IAP tunnel.
    See: `gcloud compute ssh` with `-- -L <local_port>:localhost:<remote_port>` and `--tunnel-through-iap` flag.
@@ -188,7 +196,14 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
 
 12. Add support for preemptible/spot instances in a Dataproc cluster
 
-    ***place the link to the modified file and inserted terraform code***
+    Link do zmodyfikowanego pliku: [modules/dataproc/main.tf](modules/dataproc/main.tf)
+
+    Wstawiony kod Terraform (fragment `cluster_config` w zasobie `google_dataproc_cluster`):
+    ```hcl
+    preemptible_worker_config {
+      num_instances = 2
+    }
+    ```
 
 13. Triggered Terraform Destroy on Schedule or After PR Merge. Goal: make sure we never forget to clean up resources and burn money.
 
