@@ -75,7 +75,22 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
 5. Analyze terraform code. Play with terraform plan, terraform graph to investigate different modules.
 
-    ***describe one selected module and put the output of terraform graph for this module here***
+    Analizowany moduł: **VPC** (Virtual Private Cloud).
+    Moduł ten odpowiada za stworzenie izolowanej sieci logicznej w GCP.
+    Składa się z:
+    - głównej sieci (virtual network),
+    - podsieci (subnets) w regionie europe-west1,
+    - reguł zapory ogniowej (firewall rules) pozwalających na ruch wewnętrzny i SSH,
+    - routera chmurowego (cloud router) wraz z bramą NAT, co umożliwia instancjom bez publicznego IP dostęp do internetu.
+
+    Output grafu (fragment dla modułu VPC):
+    ```dot
+    "module.vpc.module.vpc.module.vpc.google_compute_network.network" -> "google_project.tbd_project";
+    "module.vpc.module.vpc.module.subnets.google_compute_subnetwork.subnetwork" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
+    "module.vpc.module.vpc.module.firewall_rules.google_compute_firewall.rules" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
+    "module.vpc.module.cloud-router.google_compute_router.router" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
+    "module.vpc.google_compute_compute_address.external_ip" -> "google_project.tbd_project";
+    ```
 
 6. Reach YARN UI
 

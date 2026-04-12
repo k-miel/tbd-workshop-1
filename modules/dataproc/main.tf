@@ -125,6 +125,9 @@ resource "google_dataproc_cluster" "tbd-dataproc-cluster" {
       }
     }
 
+    preemptible_worker_config {
+      num_instances = 2
+    }
     worker_config {
       num_instances = 2
       machine_type  = var.machine_type
