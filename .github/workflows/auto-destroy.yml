@@ -1,0 +1,35 @@
+name: Auto-Destroy
+on:
+  schedule:
+    - cron: '0 20 * * *'
+  pull_request:
+    branches: [ master ]
+    types: [ closed ]
+
+permissions: read-all
+
+jobs:
+  auto-destroy:
+    if: |
+      github.event_name == 'schedule' ||
+      (github.event.pull_request.merged == true && contains(github.event.pull_request.title, '[CLEANUP]'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: 'actions/checkout@v3'
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.11.0
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_NAME }}
+          service_account: ${{ secrets.GCP_WORKLOAD_IDENTITY_SA_EMAIL }}
+      - name: Terraform Init
+        run: terraform init -backend-config=env/backend.tfvars
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -var-file env/project.tfvars
