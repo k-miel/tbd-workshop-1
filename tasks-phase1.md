@@ -172,12 +172,19 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
 
     d) Verify the DAG completes successfully and check that ORC files were written to the data bucket:
     ```bash
-    gsutil ls gs://PROJECT_NAME-data/data/shakespeare/
+    gs://tbd-2026l-321362-data/data/shakespeare/
+    gs://tbd-2026l-321362-data/data/shakespeare/_SUCCESS
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00000-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00000-afad560a-fa79-4481-a7b7-4a61dc22ef4f-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00001-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00001-afad560a-fa79-4481-a7b7-4a61dc22ef4f-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00002-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00002-afad560a-fa79-4481-a7b7-4a61dc22ef4f-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00003-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
     ```
 
     ![Airflow Success](doc/figures/9-airflow-success.png)
 
-    ***place a screenshot of the successful DAG run in Airflow UI***
 
 11. Create a BigQuery dataset and an external table using SQL
 
