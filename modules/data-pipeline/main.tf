@@ -2,7 +2,7 @@ resource "google_storage_bucket" "tbd-code-bucket" {
   project                     = var.project_name
   name                        = var.bucket_name
   location                    = var.region
-  uniform_bucket_level_access = false #tfsec:ignore:google-storage-enable-ubla
+  uniform_bucket_level_access = true #tfsec:ignore:google-storage-enable-ubla
   force_destroy               = true
   versioning {
     enabled = true
@@ -32,7 +32,7 @@ resource "google_storage_bucket" "tbd-data-bucket" {
   project                     = var.project_name
   name                        = var.data_bucket_name
   location                    = var.region
-  uniform_bucket_level_access = false #tfsec:ignore:google-storage-enable-ubla
+  uniform_bucket_level_access = true #tfsec:ignore:google-storage-enable-ubla
   force_destroy               = true
   public_access_prevention    = "enforced"
   versioning {
