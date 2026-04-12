@@ -33,6 +33,15 @@ module "vpc" {
   subnet_address = local.main_subnet_address
 }
 
+# Read subnet back from GCP API after VPC creation to ensure full propagation
+# before passing it to Dataproc (avoids "subnet not ready" race condition)
+data "google_compute_subnetwork" "main" {
+  depends_on = [module.vpc]
+  name       = local.notebook_subnet_name
+  region     = var.region
+  project    = var.project_name
+}
+
 
 module "gcr" {
   source       = "./modules/gcr"
@@ -71,11 +80,11 @@ module "gcr" {
 
 #
 module "dataproc" {
-  depends_on    = [module.vpc]
+  depends_on    = [data.google_compute_subnetwork.main]
   source        = "./modules/dataproc"
   project_name  = var.project_name
   region        = var.region
-  subnet        = module.vpc.subnets[local.notebook_subnet_id].id
+  subnet        = data.google_compute_subnetwork.main.self_link
   machine_type  = "e2-standard-2"
   image_version = "2.2.69-ubuntu22"
 }

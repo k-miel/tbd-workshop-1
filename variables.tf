@@ -40,6 +40,12 @@ variable "github_branch" {
   description = "GitHub branch for Airflow git-sync DAG syncing"
 }
 
+variable "iac_service_account" {
+  type        = string
+  description = "IAC Service Account used by CI/CD (output from cicd_bootstrap)"
+  default     = ""
+}
+
 ## Vertex AI Workbench has been replaced with Jupyter on Dataproc
 #variable "ai_notebook_instance_owner" {
 #  type        = string
