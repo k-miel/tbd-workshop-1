@@ -4,7 +4,7 @@
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | ~> 5.44.0 |
 | <a name="requirement_google-beta"></a> [google-beta](#requirement\_google-beta) | ~> 5.44.0 |
@@ -13,7 +13,7 @@
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | 5.44.2 |
 | <a name="provider_google-beta"></a> [google-beta](#provider\_google-beta) | 5.44.2 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.1.2 |
@@ -25,7 +25,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google-beta_google_service_networking_connection.private_vpc_connection](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/google_service_networking_connection) | resource |
 | [google_app_engine_flexible_app_version.mlflow_default_app](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/app_engine_flexible_app_version) | resource |
 | [google_compute_global_address.private_ip_address](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_global_address) | resource |
@@ -47,7 +47,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_availability_type"></a> [availability\_type](#input\_availability\_type) | n/a | `string` | `"ZONAL"` | no |
 | <a name="input_env"></a> [env](#input\_env) | n/a | `string` | n/a | yes |
 | <a name="input_machine_type"></a> [machine\_type](#input\_machine\_type) | n/a | `string` | `"db-g1-small"` | no |
@@ -62,7 +62,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_mlflow_appengine_url"></a> [mlflow\_appengine\_url](#output\_mlflow\_appengine\_url) | n/a |
 | <a name="output_mlflow_artifacts_bucket_name"></a> [mlflow\_artifacts\_bucket\_name](#output\_mlflow\_artifacts\_bucket\_name) | n/a |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

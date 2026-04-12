@@ -79,7 +79,7 @@ resource "google_storage_bucket" "tbd-state-bucket" {
   project                     = google_project.tbd_project.project_id
   name                        = "${local.project}-state"
   location                    = var.region
-  uniform_bucket_level_access = false #tfsec:ignore:google-storage-enable-ubla
+  uniform_bucket_level_access = true #tfsec:ignore:google-storage-enable-ubla
   force_destroy               = true
   lifecycle {
     prevent_destroy = true
