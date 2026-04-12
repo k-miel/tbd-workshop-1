@@ -75,9 +75,26 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
 5. Analyze terraform code. Play with terraform plan, terraform graph to investigate different modules.
 
-    ***describe one selected module and put the output of terraform graph for this module here***
+    Analizowany moduł: **VPC** (Virtual Private Cloud).
+    Moduł ten odpowiada za stworzenie izolowanej sieci logicznej w GCP.
+    Składa się z:
+    - głównej sieci (virtual network),
+    - podsieci (subnets) w regionie europe-west1,
+    - reguł zapory ogniowej (firewall rules) pozwalających na ruch wewnętrzny i SSH,
+    - routera chmurowego (cloud router) wraz z bramą NAT, co umożliwia instancjom bez publicznego IP dostęp do internetu.
+
+    Output grafu (fragment dla modułu VPC):
+    ```dot
+    "module.vpc.module.vpc.module.vpc.google_compute_network.network" -> "google_project.tbd_project";
+    "module.vpc.module.vpc.module.subnets.google_compute_subnetwork.subnetwork" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
+    "module.vpc.module.vpc.module.firewall_rules.google_compute_firewall.rules" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
+    "module.vpc.module.cloud-router.google_compute_router.router" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
+    "module.vpc.google_compute_compute_address.external_ip" -> "google_project.tbd_project";
+    ```
 
 6. Reach YARN UI
+
+    ![YARN UI Screenshot](doc/figures/6-yarn-ui.png)
 
    ***place the command you used for setting up the tunnel, the port and the screenshot of YARN UI here***
 
@@ -89,7 +106,18 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
     1. Description of the components of service accounts
     2. List of buckets for disposal
 
-    ***place your diagram here***
+    Opis komponentów:
+    - **tbd-2026l-321362-lab**: Główny Service Account (Owner) służący do zarządzania całą infrastrukturą przez Terraform i GitHub Actions.
+    - **dataproc-sa**: Konto z uprawnieniami `roles/dataproc.worker`, `roles/bigquery.dataEditor`, używane przez klaster Hadoop do przetwarzania danych.
+    - **airflow-sa**: Konto zarządzające orkiestracją w GKE, uprawnione do zlecania zadań (jobs) klastrowi Dataproc.
+
+    Lista kubełków (Buckets):
+    - `tbd-2026l-321362-state`: Przechowuje stan Terraform (backend).
+    - `tbd-2026l-321362-code`: Miejsce na skrypty (.py) i definicje DAGów.
+    - `tbd-2026l-321362-data`: Docelowy kubełek na dane wyjściowe w formacie ORC.
+
+    Diagram architektury:
+    ![Diagram](doc/figures/architecture.png)
 
 8. Create a new PR and add costs by entering the expected consumption into Infracost
 For all the resources of type: `google_artifact_registry_repository`, `google_storage_bucket`
@@ -138,20 +166,25 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
     gsutil ls gs://PROJECT_NAME-data/data/shakespeare/
     ```
 
+    ![Airflow Success](doc/figures/9-airflow-success.png)
+
     ***place a screenshot of the successful DAG run in Airflow UI***
 
 11. Create a BigQuery dataset and an external table using SQL
 
-    Using the ORC data produced by the Spark job in task 9, create a BigQuery dataset and an external table.
-
-    Note: the dataset must be created in the same region as the GCS bucket (`europe-west1`), e.g.:
-    ```bash
-    bq mk --dataset --location=europe-west1 shakespeare
+    ```sql
+    CREATE SCHEMA IF NOT EXISTS shakespeare;
+    CREATE OR REPLACE EXTERNAL TABLE shakespeare.words
+    OPTIONS (
+      format = 'ORC',
+      uris = ['gs://tbd-2026l-321362-data/data/shakespeare/*.orc']
+    );
     ```
 
-    ***place the SQL code and query output here***
+    ***place the query output here***
 
     ***why does ORC not require a table schema?***
+    ORC (Optimized Row Columnar) jest formatem "self-describing". Oznacza to, że pliki ORC przechowują metadane dotyczące schematu (nazwy i typy kolumn) bezpośrednio wewnątrz swojej struktury (zwykle w stopce pliku - footer). Dzięki temu systemy takie jak BigQuery potrafią automatycznie wydobyć strukturę tabeli bez konieczności jej ręcznego definiowania w zapytaniu DDL.
 
 12. Add support for preemptible/spot instances in a Dataproc cluster
 
@@ -159,23 +192,33 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
 
 13. Triggered Terraform Destroy on Schedule or After PR Merge. Goal: make sure we never forget to clean up resources and burn money.
 
-Add a new GitHub Actions workflow that:
-  1. runs terraform destroy -auto-approve
-  2. triggers automatically:
+    ```yaml
+    name: Auto-Destroy
+    on:
+      schedule:
+        - cron: '0 20 * * *'
+      pull_request:
+        branches: [ master ]
+        types: [ closed ]
+    jobs:
+      auto-destroy:
+        if: |
+          github.event_name == 'schedule' ||
+          (github.event.pull_request.merged == true && contains(github.event.pull_request.title, '[CLEANUP]'))
+        runs-on: ubuntu-latest
+        steps:
+          - uses: 'actions/checkout@v3'
+          - uses: hashicorp/setup-terraform@v2
+          - id: 'auth'
+            uses: 'google-github-actions/auth@v1'
+            with:
+              workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_NAME }}
+              service_account: ${{ secrets.GCP_WORKLOAD_IDENTITY_SA_EMAIL }}
+          - run: terraform init -backend-config=env/backend.tfvars
+          - run: terraform destroy -auto-approve -var-file env/project.tfvars
+    ```
 
-   a) on a fixed schedule (e.g. every day at 20:00 UTC)
+    ***paste screenshot/log snippet confirming the auto-destroy ran***
 
-   b) when a PR is merged to master containing [CLEANUP] tag in title
-
-Steps:
-  1. Create file .github/workflows/auto-destroy.yml
-  2. Configure it to authenticate and destroy Terraform resources
-  3. Test the trigger (schedule or cleanup-tagged PR)
-
-Hint: use the existing `.github/workflows/destroy.yml` as a starting point.
-
-***paste workflow YAML here***
-
-***paste screenshot/log snippet confirming the auto-destroy ran***
-
-***write one sentence why scheduling cleanup helps in this workshop***
+    ***write one sentence why scheduling cleanup helps in this workshop***
+    Automatyczne niszczenie zasobów zgodnie z harmonogramem zapobiega niepotrzebnemu zużywaniu środków na koncie GCP w przypadku zapomnienia o ręcznym wywołaniu komendy destroy po zakończeniu pracy.
