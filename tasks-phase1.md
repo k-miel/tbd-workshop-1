@@ -70,7 +70,7 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
     2. Create PR from this branch to **YOUR** master and merge it to make new release.
 
-    ***place the screenshot from GA after successful application of release***
+    ![Release GA Screenshot](doc/figures/4-release-success.png)
 
 
 5. Analyze terraform code. Play with terraform plan, terraform graph to investigate different modules.
@@ -133,7 +133,8 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
 
    ***place the expected consumption you entered here***
 
-   ***place the screenshot from infracost output here***
+      ![Infracost output](doc/figures/8-infracost.png)
+
 
 9. Find and correct the error in spark-job.py
 
