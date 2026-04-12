@@ -52,8 +52,8 @@ resource "google_sql_database_instance" "mlflow_cloudsql_instance" {
     availability_type = var.availability_type
 
     user_labels = {
-      env  = "dev"
-      team = "group2"
+      environment = "dev"
+      service     = "tbd"
     }
 
     disk_size       = 10

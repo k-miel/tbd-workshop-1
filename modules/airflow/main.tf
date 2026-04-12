@@ -59,8 +59,8 @@ resource "google_container_cluster" "airflow" {
   deletion_protection = false
 
   resource_labels = {
-    env  = "dev"
-    team = "group2"
+    environment = "dev"
+    service     = "tbd"
   }
 }
 

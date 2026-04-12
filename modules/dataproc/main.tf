@@ -38,8 +38,8 @@ resource "google_storage_bucket" "dataproc_staging" {
   public_access_prevention    = "enforced"
 
   labels = {
-    env  = "dev"
-    team = "group2"
+    environment = "dev"
+    service     = "tbd"
   }
 
   versioning {
@@ -93,8 +93,8 @@ resource "google_dataproc_cluster" "tbd-dataproc-cluster" {
   region  = var.region
 
   labels = {
-    env  = "dev"
-    team = "group2"
+    environment = "dev"
+    service     = "tbd"
   }
 
   lifecycle {

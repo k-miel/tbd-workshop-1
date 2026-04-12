@@ -8,8 +8,8 @@ resource "google_storage_bucket" "mlflow_artifacts_bucket" {
   storage_class               = "MULTI_REGIONAL"
   uniform_bucket_level_access = true
   labels = {
-    env  = "dev"
-    team = "group2"
+    environment = "dev"
+    service     = "tbd"
   }
 }
 

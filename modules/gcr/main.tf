@@ -18,8 +18,8 @@ resource "google_artifact_registry_repository" "registry" {
   description   = "TBD Docker repository"
   format        = "DOCKER"
   labels = {
-    env  = "dev"
-    team = "group2"
+    environment = "dev"
+    service     = "tbd"
   }
 
   docker_config {
