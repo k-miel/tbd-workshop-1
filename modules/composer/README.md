@@ -2,26 +2,26 @@
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.11.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | ~> 5.44.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_google"></a> [google](#provider\_google) | 5.44.2 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_composer"></a> [composer](#module\_composer) | terraform-google-modules/composer/google//modules/create_environment_v2 | ~> 5.0.0 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [google_compute_subnetwork.composer-subnet](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_project_iam_member.composer-member](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_iam_member.dataproc-editor-iam](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
@@ -32,7 +32,7 @@
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_env_name"></a> [env\_name](#input\_env\_name) | Composer env name | `string` | `"demo-lab"` | no |
 | <a name="input_env_size"></a> [env\_size](#input\_env\_size) | Environment size | `string` | `"ENVIRONMENT_SIZE_SMALL"` | no |
 | <a name="input_env_variables"></a> [env\_variables](#input\_env\_variables) | Apache Airflow variables to set | `map(string)` | n/a | yes |
@@ -46,7 +46,7 @@
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_data_service_account"></a> [data\_service\_account](#output\_data\_service\_account) | Apache Airflow service account |
 | <a name="output_gcs_bucket"></a> [gcs\_bucket](#output\_gcs\_bucket) | GCS bucket for storing Apache Airflow DAGs |
 | <a name="output_gke_cluster"></a> [gke\_cluster](#output\_gke\_cluster) | Composer underlying GKE cluster |
