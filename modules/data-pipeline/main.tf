@@ -4,6 +4,10 @@ resource "google_storage_bucket" "tbd-code-bucket" {
   location                    = var.region
   uniform_bucket_level_access = true #tfsec:ignore:google-storage-enable-ubla
   force_destroy               = true
+  labels = {
+    env  = "dev"
+    team = "group2"
+  }
   versioning {
     enabled = true
   }
@@ -34,6 +38,10 @@ resource "google_storage_bucket" "tbd-data-bucket" {
   location                    = var.region
   uniform_bucket_level_access = true #tfsec:ignore:google-storage-enable-ubla
   force_destroy               = true
+  labels = {
+    env  = "dev"
+    team = "group2"
+  }
   public_access_prevention    = "enforced"
   versioning {
     enabled = true
