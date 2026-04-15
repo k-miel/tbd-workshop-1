@@ -1,0 +1,46 @@
+name: Run Real Dataproc Spark Job
+on:
+  push:
+    branches:
+      - fix-missing-orc
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  run-dataproc-job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_NAME }}
+          service_account: ${{ secrets.GCP_WORKLOAD_IDENTITY_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Wait for Dataproc cluster to be ready
+        run: |
+          echo "Checking if tbd-cluster is ready..."
+          gcloud config set project tbd-2026l-321362
+          STATUS=$(gcloud dataproc clusters describe tbd-cluster --region europe-west1 --format="value(status.state)" || echo "NOT_FOUND")
+          echo "Cluster status: $STATUS"
+
+      - name: Prepare script
+        run: |
+          # The buckets are already created by terraform apply which just succeeded
+          gsutil cp modules/data-pipeline/resources/spark-job.py gs://tbd-2026l-321362-code/spark-job.py
+
+      - name: Submit PySpark Job to Dataproc
+        run: |
+          gcloud dataproc jobs submit pyspark gs://tbd-2026l-321362-code/spark-job.py \
+            --cluster=tbd-cluster \
+            --region=europe-west1 \
+            --project=tbd-2026l-321362
+
+      - name: Verify outputs
+        run: gsutil ls gs://tbd-2026l-321362-data/data/shakespeare/
