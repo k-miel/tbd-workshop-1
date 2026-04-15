@@ -1,0 +1,51 @@
+name: Upload Dummy ORC File
+on:
+  push:
+    branches:
+      - fix-missing-orc
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  upload-orc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_NAME }}
+          service_account: ${{ secrets.GCP_WORKLOAD_IDENTITY_SA_EMAIL }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install pandas pyarrow "google-cloud-storage<3.0.0"
+
+      - name: Create and Upload ORC
+        run: |
+          python -c "
+          import pandas as pd
+          import pyarrow as pa
+          import pyarrow.orc as orc
+          
+          data = [
+              {'word': 'the', 'word_count': 100, 'corpus': 'hamleta', 'corpus_date': 1600},
+              {'word': 'and', 'word_count': 50, 'corpus': 'hamleta', 'corpus_date': 1600},
+              {'word': 'I', 'word_count': 30, 'corpus': 'romeo', 'corpus_date': 1595},
+              {'word': 'to', 'word_count': 25, 'corpus': 'romeo', 'corpus_date': 1595},
+              {'word': 'of', 'word_count': 20, 'corpus': 'lear', 'corpus_date': 1605},
+              {'word': 'a', 'word_count': 15, 'corpus': 'macbeth', 'corpus_date': 1606},
+          ]
+          df = pd.DataFrame(data)
+          table = pa.Table.from_pandas(df)
+          orc.write_table(table, 'part-00000-dummy-c000.snappy.orc')
+          "
+          gsutil cp part-00000-dummy-c000.snappy.orc gs://tbd-2026l-321362-data/data/shakespeare/part-00000-dummy-c000.snappy.orc
