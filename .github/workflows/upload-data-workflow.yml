@@ -35,7 +35,11 @@ jobs:
           import pandas as pd
           import pyarrow as pa
           import pyarrow.orc as orc
+          from google.cloud import storage
+          import sys
+          import traceback
           
+          print('Generating ORC...')
           data = [
               {'word': 'the', 'word_count': 100, 'corpus': 'hamleta', 'corpus_date': 1600},
               {'word': 'and', 'word_count': 50, 'corpus': 'hamleta', 'corpus_date': 1600},
@@ -44,8 +48,21 @@ jobs:
               {'word': 'of', 'word_count': 20, 'corpus': 'lear', 'corpus_date': 1605},
               {'word': 'a', 'word_count': 15, 'corpus': 'macbeth', 'corpus_date': 1606},
           ]
-          df = pd.DataFrame(data)
-          table = pa.Table.from_pandas(df)
-          orc.write_table(table, 'part-00000-dummy-c000.snappy.orc')
+          try:
+              df = pd.DataFrame(data)
+              table = pa.Table.from_pandas(df)
+              orc.write_table(table, 'part-00000-dummy-c000.snappy.orc')
+              print('Uploading to GCS...')
+              client = storage.Client()
+              bucket = client.bucket('tbd-2026l-321362-data')
+              if not bucket.exists():
+                  print(f'Bucket tbd-2026l-321362-data does not exist! I am trying to create it.')
+                  bucket = client.create_bucket('tbd-2026l-321362-data', location='europe-west1')
+              blob = bucket.blob('data/shakespeare/part-00000-dummy-c000.snappy.orc')
+              blob.upload_from_filename('part-00000-dummy-c000.snappy.orc')
+              print('Upload complete!')
+          except Exception as e:
+              print('Error:', e)
+              traceback.print_exc()
+              sys.exit(1)
           "
-          gsutil cp part-00000-dummy-c000.snappy.orc gs://tbd-2026l-321362-data/data/shakespeare/part-00000-dummy-c000.snappy.orc
