@@ -65,6 +65,8 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
 3. From available Github Actions select and run destroy on master branch.
 
+   ![Destroy Success](doc/figures/3-destory-succes.png)
+
 4. Create new git branch and:
     1. Modify tasks-phase1.md file.
 
@@ -153,7 +155,7 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
    **Opis:** Klaster Dataproc ma `internal_ip_only = true`, więc nie posiada zewnętrznego IP. Połączenie SSH przez `--tunnel-through-iap` kieruje ruch przez Google Identity-Aware Proxy (firewall `fw-allow-ingress-iap` przepuszcza TCP:22 z zakresu `35.235.240.0/20`). Flaga `-L 8088:localhost:8088` tworzy lokalny port-forward — po uruchomieniu YARN UI jest dostępny pod adresem **http://localhost:8088**.
 
-   ***place a screenshot of YARN UI here***
+   ![YARN UI](doc/figures/6-yarn-ui.png)
 
    Hint: the Dataproc cluster has `internal_ip_only = true`, so you need to use an IAP tunnel.
    See: `gcloud compute ssh` with `-- -L <local_port>:localhost:<remote_port>` and `--tunnel-through-iap` flag.
@@ -180,7 +182,15 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 For all the resources of type: `google_artifact_registry_repository`, `google_storage_bucket`
 create a sample usage profiles and add it to the Infracost task in CI/CD pipeline. Usage file [example](https://github.com/infracost/infracost/blob/master/infracost-usage-example.yml)
 
-   ***place the expected consumption you entered here***
+   ```yaml
+   module.gcr.google_artifact_registry_repository.registry:
+     storage_gb: 50
+     monthly_data_transfer_gb: 10
+   module.data-pipelines.google_storage_bucket.tbd-data-bucket:
+     storage_gb: 500
+     monthly_data_retrieval_gb: 100
+     monthly_data_substitution_gb: 100
+   ```
 
       ![Infracost output](doc/figures/8-infracost.png)
 
@@ -203,13 +213,16 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
 
     a) In the Airflow UI (http://AIRFLOW_EXTERNAL_IP:8080, login: admin/admin), find the `dataproc_job` DAG, unpause it and trigger it manually.
 
-    ***place a screenshot of the DAG in the Airflow UI***
+    ![DAG View](doc/figures/9-dag-view.png)
 
     b) The DAG will fail. Examine the task logs in the Airflow UI to find the root cause.
 
-    ***paste the relevant error message from the Airflow task log***
+    ```
+    google.api_core.exceptions.NotFound: 404 GET https://storage.googleapis.com/storage/v1/b/tbd-2026l-9010-data?projection=noAcl&prettyPrint=false:
+    The specified bucket does not exist.
+    ```
 
-    ***describe what the error is and how you found it***
+    Błąd polegał na nieprawidłowym identyfikatorze projektu zakodowanym na stałe w skrypcie `spark-job.py` — ścieżka wyjściowa wskazywała na bucket `gs://tbd-2026l-9010-data/`, który nie istnieje. Prawidłowa nazwa bucketu to `gs://tbd-2026l-321362-data/`. Błąd znaleziono w logach taska `submit_dataproc_job` w Airflow UI (zakładka *Log* → sekcja *Exception*).
 
     c) Fix the error in `modules/data-pipeline/resources/spark-job.py` and re-upload the file to GCS:
     ```bash
@@ -217,7 +230,7 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
     ```
     Then trigger the DAG again from the Airflow UI.
 
-    ***paste the link to the fixed file***
+    [modules/data-pipeline/resources/spark-job.py](modules/data-pipeline/resources/spark-job.py)
 
     d) Verify the DAG completes successfully and check that ORC files were written to the data bucket:
     ```bash
