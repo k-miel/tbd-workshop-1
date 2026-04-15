@@ -51,6 +51,11 @@ resource "google_sql_database_instance" "mlflow_cloudsql_instance" {
     tier              = var.machine_type
     availability_type = var.availability_type
 
+    user_labels = {
+      environment = "dev"
+      service     = "tbd"
+    }
+
     disk_size       = 10
     disk_autoresize = true
 

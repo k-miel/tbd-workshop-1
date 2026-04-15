@@ -17,6 +17,10 @@ resource "google_artifact_registry_repository" "registry" {
   repository_id = local.registry_hostname
   description   = "TBD Docker repository"
   format        = "DOCKER"
+  labels = {
+    environment = "dev"
+    service     = "tbd"
+  }
 
   docker_config {
     immutable_tags = false

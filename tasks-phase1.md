@@ -70,41 +70,90 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
     2. Create PR from this branch to **YOUR** master and merge it to make new release.
 
-    ***place the screenshot from GA after successful application of release***
+    ![Release GA Screenshot](doc/figures/4-release-success.png)
 
 
 5. Analyze terraform code. Play with terraform plan, terraform graph to investigate different modules.
 
-    Analizowany moduł: **VPC** (Virtual Private Cloud).
-    Moduł ten odpowiada za stworzenie izolowanej sieci logicznej w GCP.
-    Składa się z:
-    - głównej sieci (virtual network),
-    - podsieci (subnets) w regionie europe-west1,
-    - reguł zapory ogniowej (firewall rules) pozwalających na ruch wewnętrzny i SSH,
-    - routera chmurowego (cloud router) wraz z bramą NAT, co umożliwia instancjom bez publicznego IP dostęp do internetu.
+    ### Wybrany moduł: `modules/dataproc/` ([main.tf](modules/dataproc/main.tf))
 
-    Output grafu (fragment dla modułu VPC):
-    ```dot
-    "module.vpc.module.vpc.module.vpc.google_compute_network.network" -> "google_project.tbd_project";
-    "module.vpc.module.vpc.module.subnets.google_compute_subnetwork.subnetwork" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
-    "module.vpc.module.vpc.module.firewall_rules.google_compute_firewall.rules" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
-    "module.vpc.module.cloud-router.google_compute_router.router" -> "module.vpc.module.vpc.module.vpc.google_compute_network.network";
-    "module.vpc.google_compute_compute_address.external_ip" -> "google_project.tbd_project";
+    Moduł `dataproc` tworzy kompletną infrastrukturę klastra Hadoop/Spark w GCP. Składa się z następujących zasobów:
+
+    | Zasób Terraform | Opis |
+    |---|---|
+    | `google_project_service.dataproc` | Włącza API `dataproc.googleapis.com` w projekcie GCP |
+    | `google_service_account.dataproc_sa` | Tworzy dedykowany Service Account `{project_name}-dataproc-sa` |
+    | `google_project_iam_member.dataproc_worker` | Nadaje SA rolę `roles/dataproc.worker` |
+    | `google_project_iam_member.dataproc_bigquery_data_editor` | Nadaje SA rolę `roles/bigquery.dataEditor` (zapis danych) |
+    | `google_project_iam_member.dataproc_bigquery_user` | Nadaje SA rolę `roles/bigquery.user` (uruchamianie zapytań) |
+    | `google_storage_bucket.dataproc_staging` | Bucket GCS dla plików stagingowych zadań Spark |
+    | `google_storage_bucket.dataproc_temp` | Bucket GCS dla plików tymczasowych zadań Spark |
+    | `google_storage_bucket_iam_member` (×2) | Przyznaje SA uprawnienia `roles/storage.objectAdmin` do obu bucketów |
+    | `google_dataproc_cluster.tbd-dataproc-cluster` | Główny klaster Dataproc (master + 2 worker + 2 preemptible) |
+
+    **Konfiguracja klastra `tbd-cluster`:**
+    - Region: `europe-west1`, sieć: prywatna subnet `subnet-01` (10.10.10.0/24)
+    - `internal_ip_only = true` — klaster nie ma zewnętrznych IP, dostęp tylko przez IAP
+    - Komponenty opcjonalne: `JUPYTER`
+    - HTTP port access włączony (`enable_http_port_access = true`)
+    - Initialization action: instalacja przez pip: `pandas<2`, `mlflow`, `google-cloud-storage`, `jupyterlab`, `dbt-core`, `dbt-spark`
+    - Master: 1 × `e2-standard-2`, 100 GB pd-standard
+    - Workers: 2 × `e2-standard-2` + 2 preemptible, 100 GB pd-standard
+
+    **Zależności zasobów** (kolejność tworzenia wymuszona przez `depends_on` w klastrze):
+    API → Service Account → IAM roles → GCS Buckets → Bucket IAM → Cluster
+
+    **Output `terraform graph -type=plan -target=module.dataproc`:**
+
+    ```
+    digraph {
+    	compound = "true"
+    	newrank = "true"
+    	subgraph "root" {
+    		"[root] module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster (expand)" [label = "module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster", shape = "box"]
+    		"[root] module.dataproc.google_project_iam_member.dataproc_bigquery_data_editor (expand)" [label = "module.dataproc.google_project_iam_member.dataproc_bigquery_data_editor", shape = "box"]
+    		"[root] module.dataproc.google_project_iam_member.dataproc_bigquery_user (expand)" [label = "module.dataproc.google_project_iam_member.dataproc_bigquery_user", shape = "box"]
+    		"[root] module.dataproc.google_project_iam_member.dataproc_worker (expand)" [label = "module.dataproc.google_project_iam_member.dataproc_worker", shape = "box"]
+    		"[root] module.dataproc.google_project_service.dataproc (expand)" [label = "module.dataproc.google_project_service.dataproc", shape = "box"]
+    		"[root] module.dataproc.google_service_account.dataproc_sa (expand)" [label = "module.dataproc.google_service_account.dataproc_sa", shape = "box"]
+    		"[root] module.dataproc.google_storage_bucket.dataproc_staging (expand)" [label = "module.dataproc.google_storage_bucket.dataproc_staging", shape = "box"]
+    		"[root] module.dataproc.google_storage_bucket.dataproc_temp (expand)" [label = "module.dataproc.google_storage_bucket.dataproc_temp", shape = "box"]
+    		"[root] module.dataproc.google_storage_bucket_iam_member.staging_bucket_iam (expand)" [label = "module.dataproc.google_storage_bucket_iam_member.staging_bucket_iam", shape = "box"]
+    		"[root] module.dataproc.google_storage_bucket_iam_member.temp_bucket_iam (expand)" [label = "module.dataproc.google_storage_bucket_iam_member.temp_bucket_iam", shape = "box"]
+    		"[root] module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster (expand)" -> "[root] module.dataproc.google_project_iam_member.dataproc_bigquery_data_editor (expand)"
+    		"[root] module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster (expand)" -> "[root] module.dataproc.google_project_iam_member.dataproc_bigquery_user (expand)"
+    		"[root] module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster (expand)" -> "[root] module.dataproc.google_project_iam_member.dataproc_worker (expand)"
+    		"[root] module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster (expand)" -> "[root] module.dataproc.google_project_service.dataproc (expand)"
+    		"[root] module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster (expand)" -> "[root] module.dataproc.google_storage_bucket_iam_member.staging_bucket_iam (expand)"
+    		"[root] module.dataproc.google_dataproc_cluster.tbd-dataproc-cluster (expand)" -> "[root] module.dataproc.google_storage_bucket_iam_member.temp_bucket_iam (expand)"
+    		"[root] module.dataproc.google_project_iam_member.dataproc_bigquery_data_editor (expand)" -> "[root] module.dataproc.google_service_account.dataproc_sa (expand)"
+    		"[root] module.dataproc.google_project_iam_member.dataproc_bigquery_user (expand)" -> "[root] module.dataproc.google_service_account.dataproc_sa (expand)"
+    		"[root] module.dataproc.google_project_iam_member.dataproc_worker (expand)" -> "[root] module.dataproc.google_service_account.dataproc_sa (expand)"
+    		"[root] module.dataproc.google_storage_bucket_iam_member.staging_bucket_iam (expand)" -> "[root] module.dataproc.google_service_account.dataproc_sa (expand)"
+    		"[root] module.dataproc.google_storage_bucket_iam_member.staging_bucket_iam (expand)" -> "[root] module.dataproc.google_storage_bucket.dataproc_staging (expand)"
+    		"[root] module.dataproc.google_storage_bucket_iam_member.temp_bucket_iam (expand)" -> "[root] module.dataproc.google_service_account.dataproc_sa (expand)"
+    		"[root] module.dataproc.google_storage_bucket_iam_member.temp_bucket_iam (expand)" -> "[root] module.dataproc.google_storage_bucket.dataproc_temp (expand)"
+    	}
+    }
     ```
 
 6. Reach YARN UI
 
-    ![YARN UI Screenshot](doc/figures/6-yarn-ui.png)
+   **Komenda tunelu IAP:**
 
-   Komenda użyta do ustawienia tunelu IAP:
    ```bash
    gcloud compute ssh tbd-cluster-m \
-     --project=$(gcloud config get-value project) \
+     --project=tbd-2026l-321362 \
      --zone=europe-west1-b \
      --tunnel-through-iap \
-     -- -L 8088:localhost:8088
+     -- -L 8088:localhost:8088 -N
    ```
-   Po nawiązaniu połączenia YARN UI było dostępne pod adresem: http://localhost:8088
+
+   **Port:** 8088 (YARN ResourceManager UI)
+
+   **Opis:** Klaster Dataproc ma `internal_ip_only = true`, więc nie posiada zewnętrznego IP. Połączenie SSH przez `--tunnel-through-iap` kieruje ruch przez Google Identity-Aware Proxy (firewall `fw-allow-ingress-iap` przepuszcza TCP:22 z zakresu `35.235.240.0/20`). Flaga `-L 8088:localhost:8088` tworzy lokalny port-forward — po uruchomieniu YARN UI jest dostępny pod adresem **http://localhost:8088**.
+
+   ***place a screenshot of YARN UI here***
 
    Hint: the Dataproc cluster has `internal_ip_only = true`, so you need to use an IAP tunnel.
    See: `gcloud compute ssh` with `-- -L <local_port>:localhost:<remote_port>` and `--tunnel-through-iap` flag.
@@ -133,7 +182,8 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
 
    ***place the expected consumption you entered here***
 
-   ***place the screenshot from infracost output here***
+      ![Infracost output](doc/figures/8-infracost.png)
+
 
 9. Find and correct the error in spark-job.py
 
@@ -171,12 +221,19 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
 
     d) Verify the DAG completes successfully and check that ORC files were written to the data bucket:
     ```bash
-    gsutil ls gs://PROJECT_NAME-data/data/shakespeare/
+    gs://tbd-2026l-321362-data/data/shakespeare/
+    gs://tbd-2026l-321362-data/data/shakespeare/_SUCCESS
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00000-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00000-afad560a-fa79-4481-a7b7-4a61dc22ef4f-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00001-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00001-afad560a-fa79-4481-a7b7-4a61dc22ef4f-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00002-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00002-afad560a-fa79-4481-a7b7-4a61dc22ef4f-c000.snappy.orc
+    gs://tbd-2026l-321362-data/data/shakespeare/part-00003-4ec4b2b9-143b-4e12-b8bc-cadcc81f92f6-c000.snappy.orc
     ```
 
     ![Airflow Success](doc/figures/9-airflow-success.png)
 
-    ***place a screenshot of the successful DAG run in Airflow UI***
 
 11. Create a BigQuery dataset and an external table using SQL
 

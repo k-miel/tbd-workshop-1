@@ -37,6 +37,11 @@ resource "google_storage_bucket" "dataproc_staging" {
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
 
+  labels = {
+    environment = "dev"
+    service     = "tbd"
+  }
+
   versioning {
     enabled = true
   }
@@ -49,6 +54,11 @@ resource "google_storage_bucket" "dataproc_temp" {
   force_destroy               = true
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
+
+  labels = {
+    env  = "dev"
+    team = "group2"
+  }
 
   versioning {
     enabled = true
@@ -81,6 +91,11 @@ resource "google_dataproc_cluster" "tbd-dataproc-cluster" {
   name    = "tbd-cluster"
   project = var.project_name
   region  = var.region
+
+  labels = {
+    environment = "dev"
+    service     = "tbd"
+  }
 
   lifecycle {
     ignore_changes = [

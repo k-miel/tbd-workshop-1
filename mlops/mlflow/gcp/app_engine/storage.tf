@@ -7,6 +7,10 @@ resource "google_storage_bucket" "mlflow_artifacts_bucket" {
   location                    = substr(var.region, 0, 2) == "eu" ? "EU" : "US"
   storage_class               = "MULTI_REGIONAL"
   uniform_bucket_level_access = true
+  labels = {
+    environment = "dev"
+    service     = "tbd"
+  }
 }
 
 

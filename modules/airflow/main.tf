@@ -57,6 +57,11 @@ resource "google_container_cluster" "airflow" {
   subnetwork = var.subnet
 
   deletion_protection = false
+
+  resource_labels = {
+    environment = "dev"
+    service     = "tbd"
+  }
 }
 
 resource "google_container_node_pool" "airflow_nodes" {
