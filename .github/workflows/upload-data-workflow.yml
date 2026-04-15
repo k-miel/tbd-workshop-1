@@ -29,9 +29,9 @@ jobs:
       - name: Install dependencies
         run: pip install pandas pyarrow "google-cloud-storage<3.0.0" google-cloud-bigquery db-dtypes
 
-      - name: Create and Upload Real ORC
+      - name: Create Script
         run: |
-          python -c "
+          cat << 'EOF' > script.py
           import pandas as pd
           import pyarrow as pa
           import pyarrow.orc as orc
@@ -39,17 +39,17 @@ jobs:
           from google.cloud import bigquery
           import sys
           import traceback
-          
+
           print('Querying real dataset from BigQuery...')
           client_bq = bigquery.Client(project='tbd-2026l-321362')
-          query = \"\"\"
+          query = """
           SELECT word, sum(word_count) as sum_word_count 
-          FROM \`bigquery-public-data.samples.shakespeare\` 
-          WHERE word_count > 0 AND word NOT LIKE '%\\'%' 
+          FROM `bigquery-public-data.samples.shakespeare` 
+          WHERE word_count > 0 AND word NOT LIKE '%\'%' 
           GROUP BY word 
           ORDER BY sum_word_count DESC
-          \"\"\"
-          
+          """
+
           try:
               df = client_bq.query(query).to_dataframe()
               print(f'Downloaded {len(df)} rows. Writing ORC...')
@@ -60,7 +60,7 @@ jobs:
               client_storage = storage.Client()
               bucket = client_storage.bucket('tbd-2026l-321362-data')
               if not bucket.exists():
-                  print(f'Bucket does not exist, creating...')
+                  print('Bucket does not exist, creating...')
                   bucket = client_storage.create_bucket('tbd-2026l-321362-data', location='europe-west1')
               
               blob = bucket.blob('data/shakespeare/part-00000-real-c000.snappy.orc')
@@ -70,4 +70,7 @@ jobs:
               print('Error:', e)
               traceback.print_exc()
               sys.exit(1)
-          "
+          EOF
+
+      - name: Run Script
+        run: python script.py
