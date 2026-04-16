@@ -167,6 +167,7 @@ jobs:
                         --compare-to=/tmp/infracost-base.json \
                         --out-file=/tmp/infracost.json
     - name: Post Infracost comment
+      continue-on-error: true
       run: |
           infracost comment github --path=/tmp/infracost.json \
                                    --repo=$GITHUB_REPOSITORY \
