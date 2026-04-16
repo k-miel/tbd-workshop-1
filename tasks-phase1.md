@@ -259,7 +259,7 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
     );
     ```
 
-    ***place the query output here***
+    ![Query Output](doc/figures/10-query-output.png)
 
     ***why does ORC not require a table schema?***
     ORC (Optimized Row Columnar) jest formatem "self-describing". Oznacza to, że pliki ORC przechowują metadane dotyczące schematu (nazwy i typy kolumn) bezpośrednio wewnątrz swojej struktury (zwykle w stopce pliku - footer). Dzięki temu systemy takie jak BigQuery potrafią automatycznie wydobyć strukturę tabeli bez konieczności jej ręcznego definiowania w zapytaniu DDL.
