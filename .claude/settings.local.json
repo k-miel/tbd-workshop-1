@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep \"resource \\\\\"google_storage_bucket\\\\\"\" modules/**/main.tf)",
+      "Bash(grep -n \"branches:\" /c/Users/kacpe/OneDrive/Pulpit/tbd-workshop-1/.github/workflows/*.yml)",
+      "Bash(grep -A1 \"branches:\" /c/Users/kacpe/OneDrive/Pulpit/tbd-workshop-1/.github/workflows/*.yml)",
+      "Bash(grep \"var\\\\\\\\.project_name\\\\|var\\\\\\\\.region\\\\|var\\\\\\\\.subnet\\\\|var\\\\\\\\.machine_type\\\\|var\\\\\\\\.image_version\" /c/Users/kacpe/OneDrive/Pulpit/tbd-workshop-1/modules/dataproc/main.tf)",
+      "Bash(grep -n \"hardcoded\\\\|9010\" /c/Users/kacpe/OneDrive/Pulpit/tbd-workshop-1/main.tf /c/Users/kacpe/OneDrive/Pulpit/tbd-workshop-1/modules/data-pipeline/*.tf /c/Users/kacpe/OneDrive/Pulpit/tbd-workshop-1/modules/dataproc/*.tf)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(grep -h \"secrets\\\\\\\\.GCP_\" /c/Users/kacpe/OneDrive/Pulpit/tbd-workshop-1/.github/workflows/*.yml)"
+    ]
+  }
+}

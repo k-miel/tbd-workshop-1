@@ -65,7 +65,7 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
 
 3. From available Github Actions select and run destroy on master branch.
 
-   ![Destroy Success](doc/figures/3-destory-succes.png)
+   ![Destroy Success](doc/figures/3-destroy-success.png)
 
 4. Create new git branch and:
     1. Modify tasks-phase1.md file.
@@ -180,7 +180,7 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
    version: 0.1
    resource_usage:
      module.gcr.google_artifact_registry_repository.registry:
-       storage_gb: 50
+       storage_gb: 150
        monthly_data_transfer_gb: 10
      module.data-pipelines.google_storage_bucket.tbd-data-bucket:
        storage_gb: 500
