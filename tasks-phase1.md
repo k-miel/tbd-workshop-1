@@ -168,15 +168,6 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
     1. Description of the components of service accounts
     2. List of buckets for disposal
 
-    Opis komponentów:
-    - **tbd-2026l-321362-lab**: Główny Service Account (Owner) służący do zarządzania całą infrastrukturą przez Terraform i GitHub Actions.
-    - **dataproc-sa**: Konto z uprawnieniami `roles/dataproc.worker`, `roles/bigquery.dataEditor`, używane przez klaster Hadoop do przetwarzania danych.
-    - **airflow-sa**: Konto zarządzające orkiestracją w GKE, uprawnione do zlecania zadań (jobs) klastrowi Dataproc.
-
-    Lista kubełków (Buckets):
-    - `tbd-2026l-321362-state`: Przechowuje stan Terraform (backend).
-    - `tbd-2026l-321362-code`: Miejsce na skrypty (.py) i definicje DAGów.
-    - `tbd-2026l-321362-data`: Docelowy kubełek na dane wyjściowe w formacie ORC.
 
     Diagram architektury:
     ![Diagram](doc/figures/architecture.png)
