@@ -1,7 +1,7 @@
 version: 0.1
 resource_usage:
   module.gcr.google_artifact_registry_repository.registry:
-    storage_gb: 50
+    storage_gb: 150
     monthly_data_transfer_gb: 10
   module.data-pipelines.google_storage_bucket.tbd-data-bucket:
     storage_gb: 500
