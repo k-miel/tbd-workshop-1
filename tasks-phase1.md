@@ -103,7 +103,10 @@ IMPORTANT ❗ ❗ ❗ Please remember to destroy all the resources after each wo
     - Workers: 2 × `e2-standard-2` + 2 preemptible, 100 GB pd-standard
 
     **Zależności zasobów** (kolejność tworzenia wymuszona przez `depends_on` w klastrze):
-    API → Service Account → IAM roles → GCS Buckets → Bucket IAM → Cluster
+    - API i SA tworzone jako pierwsze (niezależnie od siebie)
+    - IAM roles i GCS Buckets tworzone równolegle (obydwa zależą od SA)
+    - Bucket IAM zależy od SA i GCS Buckets
+    - Cluster tworzony jako ostatni (depends_on: API, SA, IAM roles, Bucket IAM)
 
     **Output `terraform graph -type=plan -target=module.dataproc`:**
 
@@ -183,13 +186,27 @@ For all the resources of type: `google_artifact_registry_repository`, `google_st
 create a sample usage profiles and add it to the Infracost task in CI/CD pipeline. Usage file [example](https://github.com/infracost/infracost/blob/master/infracost-usage-example.yml)
 
    ```yaml
-   module.gcr.google_artifact_registry_repository.registry:
-     storage_gb: 50
-     monthly_data_transfer_gb: 10
-   module.data-pipelines.google_storage_bucket.tbd-data-bucket:
-     storage_gb: 500
-     monthly_data_retrieval_gb: 100
-     monthly_data_substitution_gb: 100
+   version: 0.1
+   resource_usage:
+     module.gcr.google_artifact_registry_repository.registry:
+       storage_gb: 50
+       monthly_data_transfer_gb: 10
+     module.data-pipelines.google_storage_bucket.tbd-data-bucket:
+       storage_gb: 500
+       monthly_data_retrieval_gb: 100
+       monthly_egress_data_transfer_gb: 100
+     module.data-pipelines.google_storage_bucket.tbd-code-bucket:
+       storage_gb: 10
+       monthly_data_retrieval_gb: 5
+       monthly_egress_data_transfer_gb: 5
+     module.dataproc.google_storage_bucket.dataproc_staging:
+       storage_gb: 50
+       monthly_data_retrieval_gb: 20
+       monthly_egress_data_transfer_gb: 10
+     module.dataproc.google_storage_bucket.dataproc_temp:
+       storage_gb: 50
+       monthly_data_retrieval_gb: 20
+       monthly_egress_data_transfer_gb: 10
    ```
 
       ![Infracost output](doc/figures/8-infracost.png)
@@ -285,25 +302,37 @@ create a sample usage profiles and add it to the Infracost task in CI/CD pipelin
       pull_request:
         branches: [ master ]
         types: [ closed ]
+
+    permissions: read-all
+
     jobs:
       auto-destroy:
         if: |
           github.event_name == 'schedule' ||
           (github.event.pull_request.merged == true && contains(github.event.pull_request.title, '[CLEANUP]'))
         runs-on: ubuntu-latest
+        permissions:
+          contents: read
+          id-token: write
+
         steps:
           - uses: 'actions/checkout@v3'
           - uses: hashicorp/setup-terraform@v2
+            with:
+              terraform_version: 1.11.0
           - id: 'auth'
+            name: 'Authenticate to Google Cloud'
             uses: 'google-github-actions/auth@v1'
             with:
               workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_NAME }}
               service_account: ${{ secrets.GCP_WORKLOAD_IDENTITY_SA_EMAIL }}
-          - run: terraform init -backend-config=env/backend.tfvars
-          - run: terraform destroy -auto-approve -var-file env/project.tfvars
+          - name: Terraform Init
+            run: terraform init -backend-config=env/backend.tfvars
+          - name: Terraform Destroy
+            run: terraform destroy -auto-approve -var-file env/project.tfvars
     ```
 
-    ***paste screenshot/log snippet confirming the auto-destroy ran***
+    ![Auto-Destroy run](doc/figures/13-auto-destroy.png)
 
     ***write one sentence why scheduling cleanup helps in this workshop***
     Automatyczne niszczenie zasobów zgodnie z harmonogramem zapobiega niepotrzebnemu zużywaniu środków na koncie GCP w przypadku zapomnienia o ręcznym wywołaniu komendy destroy po zakończeniu pracy.
