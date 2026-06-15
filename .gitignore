@@ -38,3 +38,10 @@ terraform.rc
 .DS_Store
 bootstrap/terraform.tfstate_*
 bin/
+
+# Phase 2 (26L) generated benchmark data — do NOT commit generated datasets/outputs.
+data/phase2_26L/
+*.parquet
+*.csv
+*.jsonl
+notebooks/dataproc_spark_job.py
